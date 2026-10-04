@@ -20,14 +20,12 @@ import {
   FileCheck2,
   Layers,
 } from 'lucide-react';
+import {
+  GeneratedAssetPage,
+  renderWorksheetPageSvg,
+} from '../utils/worksheetSvgEngine';
 
-export interface GeneratedAssetPage {
-  pageNumber: number;
-  heading: string;
-  activityInstruction: string;
-  childContent: string;
-  illustrationTheme: string;
-}
+export type { GeneratedAssetPage };
 
 export interface ActionAlertItem {
   id: string;
@@ -93,6 +91,7 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
   );
   const [selectedPageIdx, setSelectedPageIdx] = useState<number>(0);
   const [editingPageMode, setEditingPageMode] = useState<boolean>(false);
+  const [viewAllPagesGrid, setViewAllPagesGrid] = useState<boolean>(false);
 
   const togglePortal = (p: string) => {
     setTargetPortals((prev) =>
@@ -327,11 +326,10 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
         </div>
       </div>
       <div class="activity-canvas">
-        <p style="font-size:21px;font-weight:bold;max-width:540px;line-height:1.5;">${p.childContent}</p>
-        <p style="font-family:monospace;font-size:13px;color:#475569;margin-top:12px;">[Ilustración / Zona de Actividad: ${p.illustrationTheme}]</p>
-        <div class="tracing-line"></div>
-        <div class="tracing-line"></div>
-        <div class="tracing-line"></div>
+        <p style="font-size:19px;font-weight:bold;max-width:580px;line-height:1.45;margin-bottom:12px;">${p.childContent}</p>
+        <div style="width:100%;max-width:640px;margin:0 auto;">
+          ${renderWorksheetPageSvg(p, alertItem.assetTitle)}
+        </div>
       </div>
       <div class="brand-header" style="border-top:2px solid #141414;border-bottom:none;padding-top:10px;">
         <span>Nombre del peque: ___________________________</span>
@@ -375,6 +373,9 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
     <div class="chapter">
       <h2>Capítulo ${p.pageNumber}: ${p.heading}</h2>
       <p>${p.childContent}</p>
+      <div style="margin:16px 0;border:2px solid #CBD5E1;border-radius:10px;padding:10px;background:#FFF;">
+        ${renderWorksheetPageSvg(p, alertItem.assetTitle)}
+      </div>
       <div class="activity">
         <strong>Actividad Interactiva:</strong> ${p.activityInstruction}
       </div>
@@ -631,132 +632,218 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left: Visual A4 Printable Sheet Mockup + Page Tabs (7 cols) */}
             <div className="lg:col-span-7 space-y-4">
-              {/* Page Selector Tabs */}
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              {/* Top Banner: Who Creates the Graphics & Zero-Quota Guarantee */}
+              <div className="bg-[#0B0F1A] border border-emerald-500/40 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="cortx-btn-emerald px-2 py-0.5 font-mono-code text-[10px]">
+                    🎨 MOTOR GRÁFICO VECTORIAL ACTIVO · 0 CUOTA API
+                  </span>
+                  <span className="text-slate-300">
+                    Las <strong>{activePreviewAlert.pages.length} láminas anunciadas</strong> tienen su solución gráfica creada e incrustada sin esperar cuotas.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewAllPagesGrid((v) => !v)}
+                  className="cortx-btn-primary px-3 py-1 font-mono-code text-xs"
+                >
+                  {viewAllPagesGrid
+                    ? '📄 VER LÁMINA INDIVIDUAL EN GRANDE'
+                    : `👁️ VER TODAS LAS ${activePreviewAlert.pages.length} LÁMINAS A LA VEZ`}
+                </button>
+              </div>
+
+              {/* Page Selector Tabs (All announced sheets!) */}
+              <div className="flex flex-wrap items-center justify-between gap-2 bg-[#0B0F1A] p-2.5 rounded-lg border border-[#1E293B]">
                 <div className="flex flex-wrap items-center gap-1.5">
                   {activePreviewAlert.pages.map((pg, idx) => (
                     <button
                       key={pg.pageNumber}
                       type="button"
-                      onClick={() => setSelectedPageIdx(idx)}
-                      className={`px-3 py-1.5 rounded font-mono-code text-xs transition-all ${
-                        selectedPageIdx === idx
-                          ? 'cortx-btn-primary'
+                      onClick={() => {
+                        setSelectedPageIdx(idx);
+                        setViewAllPagesGrid(false);
+                      }}
+                      className={`px-2.5 py-1.5 rounded font-mono-code text-xs transition-all ${
+                        !viewAllPagesGrid && selectedPageIdx === idx
+                          ? 'cortx-btn-primary font-bold'
                           : 'cortx-btn text-slate-300'
                       }`}
                     >
-                      Lámina 0{pg.pageNumber}
+                      Lámina {String(pg.pageNumber).padStart(2, '0')}
                     </button>
                   ))}
                 </div>
-                <span className="font-mono-code text-xs text-slate-400">
-                  Previsualización en vivo A4 / 8.5x11&quot;
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewAllPagesGrid(false);
+                      setSelectedPageIdx((prev) =>
+                        prev > 0 ? prev - 1 : activePreviewAlert.pages.length - 1
+                      );
+                    }}
+                    className="cortx-btn px-2.5 py-1 text-xs font-mono-code"
+                  >
+                    ◀ Ant.
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewAllPagesGrid(false);
+                      setSelectedPageIdx((prev) =>
+                        prev < activePreviewAlert.pages.length - 1 ? prev + 1 : 0
+                      );
+                    }}
+                    className="cortx-btn px-2.5 py-1 text-xs font-mono-code"
+                  >
+                    Sig. ▶
+                  </button>
+                </div>
               </div>
 
-              {/* Paper Sheet Visual Preview */}
-              {currentPage && (
-                <div className="bg-[#FFFDF9] text-[#141414] border-4 border-[#141414] rounded-xl p-6 shadow-2xl space-y-5">
-                  <div className="flex items-center justify-between border-b-2 border-dashed border-[#141414] pb-2.5 font-mono-code text-xs text-slate-700">
-                    <span>PAPERTOPBCN · EDAD: {activePreviewAlert.ageRange}</span>
-                    <span>
-                      PÁGINA 0{currentPage.pageNumber} DE 0{activePreviewAlert.pages.length}
-                    </span>
-                  </div>
-
-                  {editingPageMode ? (
-                    <div className="space-y-3 bg-slate-100 p-4 rounded-lg border border-slate-300">
-                      <div>
-                        <label className="block font-mono-code text-[11px] text-slate-700 font-bold mb-1">
-                          TÍTULO DE LA LÁMINA:
-                        </label>
-                        <input
-                          type="text"
-                          value={currentPage.heading}
-                          onChange={(e) =>
-                            handleUpdatePageField(
-                              activePreviewAlert,
-                              selectedPageIdx,
-                              'heading',
-                              e.target.value
-                            )
-                          }
-                          className="w-full bg-white border border-slate-400 rounded px-3 py-1.5 text-sm text-black font-bold"
-                        />
+              {/* ALL SHEETS GRID MODE OR SINGLE SHEET FOLIO PREVIEW */}
+              {viewAllPagesGrid ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[820px] overflow-y-auto pr-1">
+                  {activePreviewAlert.pages.map((pg, idx) => (
+                    <div
+                      key={pg.pageNumber}
+                      onClick={() => {
+                        setSelectedPageIdx(idx);
+                        setViewAllPagesGrid(false);
+                      }}
+                      className="cursor-pointer bg-[#FFFDF9] text-[#141414] border-2 border-[#141414] rounded-xl p-3.5 shadow-lg hover:border-cyan-500 transition-all space-y-2"
+                    >
+                      <div className="flex items-center justify-between border-b border-dashed border-[#141414] pb-1 font-mono-code text-[10px] text-slate-700">
+                        <span>LÁMINA {String(pg.pageNumber).padStart(2, '0')} DE {String(activePreviewAlert.pages.length).padStart(2, '0')}</span>
+                        <span className="text-sky-700 font-bold">Clic para ampliar ↗</span>
                       </div>
-                      <div>
-                        <label className="block font-mono-code text-[11px] text-slate-700 font-bold mb-1">
-                          INSTRUCCIÓN PARA PADRES / MAESTROS:
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={currentPage.activityInstruction}
-                          onChange={(e) =>
-                            handleUpdatePageField(
-                              activePreviewAlert,
-                              selectedPageIdx,
-                              'activityInstruction',
-                              e.target.value
-                            )
-                          }
-                          className="w-full bg-white border border-slate-400 rounded px-3 py-1.5 text-xs text-black"
-                        />
-                      </div>
-                      <div>
-                        <label className="block font-mono-code text-[11px] text-slate-700 font-bold mb-1">
-                          CONTENIDO / EJERCICIO PARA EL NIÑO:
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={currentPage.childContent}
-                          onChange={(e) =>
-                            handleUpdatePageField(
-                              activePreviewAlert,
-                              selectedPageIdx,
-                              'childContent',
-                              e.target.value
-                            )
-                          }
-                          className="w-full bg-white border border-slate-400 rounded px-3 py-1.5 text-xs text-black"
-                        />
-                      </div>
+                      <h4 className="text-sm font-bold font-serif text-[#141414] line-clamp-1">
+                        {pg.heading}
+                      </h4>
+                      <div
+                        className="w-full overflow-hidden rounded border border-slate-300 bg-white"
+                        dangerouslySetInnerHTML={{
+                          __html: renderWorksheetPageSvg(pg, activePreviewAlert.assetTitle),
+                        }}
+                      />
+                      <p className="text-[11px] text-slate-700 line-clamp-2 font-serif">
+                        {pg.childContent}
+                      </p>
                     </div>
-                  ) : (
-                    <>
-                      <h3 className="text-2xl font-bold font-serif text-[#141414]">
-                        {currentPage.heading}
-                      </h3>
-
-                      <div className="bg-[#FEF3C7] border-2 border-[#141414] rounded-lg p-3.5 text-xs leading-relaxed">
-                        <strong className="uppercase font-mono-code block text-[11px] text-amber-900 mb-0.5">
-                          Guía Pedagógica para Padres y Maestros:
-                        </strong>
-                        {currentPage.activityInstruction}
-                      </div>
-
-                      <div className="border-2 border-dashed border-slate-400 rounded-xl p-6 text-center bg-white space-y-4">
-                        <p className="text-base font-bold font-serif text-slate-900 max-w-lg mx-auto leading-relaxed">
-                          &ldquo;{currentPage.childContent}&rdquo;
-                        </p>
-                        <div className="inline-block bg-slate-100 border border-slate-300 rounded px-3 py-1 font-mono-code text-[11px] text-slate-700">
-                          🎨 Maquetación Visual: {currentPage.illustrationTheme}
-                        </div>
-
-                        {/* Simulated Printable Tracing Lines */}
-                        <div className="space-y-4 pt-3 max-w-md mx-auto">
-                          <div className="border-b-2 border-dotted border-slate-800 h-4" />
-                          <div className="border-b-2 border-dotted border-slate-800 h-4" />
-                          <div className="border-b-2 border-dotted border-slate-800 h-4" />
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                  <div className="flex items-center justify-between border-t-2 border-[#141414] pt-2.5 font-mono-code text-[11px] text-slate-700">
-                    <span>Nombre: ________________________</span>
-                    <span>Archivo: {activePreviewAlert.recommendedFileNameBase}</span>
-                  </div>
+                  ))}
                 </div>
+              ) : (
+                currentPage && (
+                  <div className="bg-[#FFFDF9] text-[#141414] border-4 border-[#141414] rounded-xl p-5 shadow-2xl space-y-4">
+                    <div className="flex items-center justify-between border-b-2 border-dashed border-[#141414] pb-2.5 font-mono-code text-xs text-slate-700">
+                      <span>PAPERTOPBCN · EDAD: {activePreviewAlert.ageRange}</span>
+                      <span className="font-bold text-slate-900">
+                        LÁMINA {String(currentPage.pageNumber).padStart(2, '0')} DE{' '}
+                        {String(activePreviewAlert.pages.length).padStart(2, '0')} (TODAS LAS LÁMINAS INCLUIDAS)
+                      </span>
+                    </div>
+
+                    {editingPageMode ? (
+                      <div className="space-y-3 bg-slate-100 p-4 rounded-lg border border-slate-300">
+                        <div>
+                          <label className="block font-mono-code text-[11px] text-slate-700 font-bold mb-1">
+                            TÍTULO DE LA LÁMINA:
+                          </label>
+                          <input
+                            type="text"
+                            value={currentPage.heading}
+                            onChange={(e) =>
+                              handleUpdatePageField(
+                                activePreviewAlert,
+                                selectedPageIdx,
+                                'heading',
+                                e.target.value
+                              )
+                            }
+                            className="w-full bg-white border border-slate-400 rounded px-3 py-1.5 text-sm text-black font-bold"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-mono-code text-[11px] text-slate-700 font-bold mb-1">
+                            INSTRUCCIÓN PARA PADRES / MAESTROS:
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={currentPage.activityInstruction}
+                            onChange={(e) =>
+                              handleUpdatePageField(
+                                activePreviewAlert,
+                                selectedPageIdx,
+                                'activityInstruction',
+                                e.target.value
+                              )
+                            }
+                            className="w-full bg-white border border-slate-400 rounded px-3 py-1.5 text-xs text-black"
+                          />
+                        </div>
+                        <div>
+                          <label className="block font-mono-code text-[11px] text-slate-700 font-bold mb-1">
+                            CONTENIDO / EJERCICIO PARA EL NIÑO:
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={currentPage.childContent}
+                            onChange={(e) =>
+                              handleUpdatePageField(
+                                activePreviewAlert,
+                                selectedPageIdx,
+                                'childContent',
+                                e.target.value
+                              )
+                            }
+                            className="w-full bg-white border border-slate-400 rounded px-3 py-1.5 text-xs text-black"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <h3 className="text-xl md:text-2xl font-bold font-serif text-[#141414]">
+                          {currentPage.heading}
+                        </h3>
+
+                        <div className="bg-[#FEF3C7] border-2 border-[#141414] rounded-lg p-3 text-xs leading-relaxed">
+                          <strong className="uppercase font-mono-code block text-[11px] text-amber-900 mb-0.5">
+                            Guía Pedagógica para Padres y Maestros:
+                          </strong>
+                          {currentPage.activityInstruction}
+                        </div>
+
+                        <div className="border-2 border-[#141414] rounded-xl p-4 text-center bg-white space-y-3">
+                          <p className="text-sm md:text-base font-bold font-serif text-slate-900 max-w-xl mx-auto leading-relaxed">
+                            &ldquo;{currentPage.childContent}&rdquo;
+                          </p>
+
+                          {/* REAL GRAPHIC SOLUTION CREATED BY PAPERTOPBCN SVG ENGINE */}
+                          <div
+                            className="w-full overflow-hidden rounded-lg border border-slate-300"
+                            dangerouslySetInnerHTML={{
+                              __html: renderWorksheetPageSvg(
+                                currentPage,
+                                activePreviewAlert.assetTitle
+                              ),
+                            }}
+                          />
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] font-mono-code text-slate-600">
+                            <span>✅ Solución Gráfica Vectorial Creada: {currentPage.illustrationTheme}</span>
+                            <span className="text-emerald-700 font-bold">Listo para Imprimir A4 / KDP</span>
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="flex items-center justify-between border-t-2 border-[#141414] pt-2.5 font-mono-code text-[11px] text-slate-700">
+                      <span>Nombre: ________________________</span>
+                      <span>Archivo: {activePreviewAlert.recommendedFileNameBase}</span>
+                    </div>
+                  </div>
+                )
               )}
             </div>
 

@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import type { FunctionDeclaration } from '@google/genai';
+import { COMPLETE_ACTION_ALERTS } from './src/data/completeWorksheetsData';
+import { renderWorksheetPageSvg, GeneratedAssetPage } from './src/utils/worksheetSvgEngine';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -300,7 +302,7 @@ async function startServer() {
       fileNameCode: string,
       age: string,
       pageSize: 'A4' | '8.5in 11in',
-      pages: { num: number; heading: string; guide: string; content: string; theme: string }[]
+      pages: GeneratedAssetPage[]
     ) => `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -311,22 +313,21 @@ async function startServer() {
     body { font-family: Georgia, serif; color: #141414; margin: 0; padding: 20px; background: #fff; }
     .print-bar { background: #0B0F1A; color: #fff; padding: 16px 22px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; border-radius: 8px; font-family: sans-serif; border: 2px solid #10B981; }
     .print-btn { background: #10B981; color: #000; font-weight: bold; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 14px; }
-    .page-sheet { border: 3px solid #141414; border-radius: 12px; padding: 28px; margin-bottom: 28px; page-break-after: always; min-height: 235mm; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+    .page-sheet { border: 3px solid #141414; border-radius: 12px; padding: 24px; margin-bottom: 28px; page-break-after: always; min-height: 235mm; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
     .brand-header { display: flex; justify-content: space-between; border-bottom: 2px dashed #141414; padding-bottom: 10px; font-family: monospace; font-size: 12px; }
-    h1 { font-size: 26px; margin: 16px 0 8px 0; }
-    .instruction-box { background: #FEF3C7; border: 2px solid #141414; padding: 14px; border-radius: 8px; font-size: 16px; margin: 12px 0; }
-    .activity-canvas { border: 2px dashed #64748B; border-radius: 10px; padding: 30px; text-align: center; margin: 18px 0; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-    .tracing-line { width: 85%; border-bottom: 3px dotted #141414; margin: 18px 0; height: 24px; }
+    h1 { font-size: 23px; margin: 12px 0 8px 0; }
+    .instruction-box { background: #FEF3C7; border: 2px solid #141414; padding: 12px; border-radius: 8px; font-size: 14px; margin: 8px 0; }
+    .activity-canvas { border: 2px solid #141414; border-radius: 10px; padding: 16px; text-align: center; margin: 10px 0; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #fff; }
     @media print { .print-bar { display: none; } body { padding: 0; } }
   </style>
 </head>
 <body>
   <div class="print-bar">
     <div>
-      <strong>PaperTopBCN — Archivo Aprobado con OK (${fileNameCode})</strong><br/>
-      <span style="font-size:12px;color:#94A3B8;">Pulsa el botón verde y elige "Guardar como PDF" con el nombre: <strong>${fileNameCode}.pdf</strong></span>
+      <strong>PaperTopBCN — Archivo Oficial con Todas las Láminas e Ilustraciones (${fileNameCode})</strong><br/>
+      <span style="font-size:12px;color:#94A3B8;">Incluye las ${pages.length} láminas anunciadas con solución gráfica vectorial · Pulsa el botón verde para guardar como <strong>${fileNameCode}.pdf</strong></span>
     </div>
-    <button class="print-btn" onclick="window.print()">🖨️ GUARDAR COMO ${fileNameCode}.pdf</button>
+    <button class="print-btn" onclick="window.print()">🖨️ GUARDAR LAS ${pages.length} LÁMINAS COMO ${fileNameCode}.pdf</button>
   </div>
   ${pages
     .map(
@@ -335,19 +336,18 @@ async function startServer() {
       <div>
         <div class="brand-header">
           <span>PAPERTOPBCN · EDAD RECOMENDADA: ${age}</span>
-          <span>LÁMINA 0${p.num} · ${fileNameCode}</span>
+          <span>LÁMINA ${String(p.pageNumber).padStart(2, '0')} DE ${String(pages.length).padStart(2, '0')} · ${fileNameCode}</span>
         </div>
         <h1>${p.heading}</h1>
         <div class="instruction-box">
-          <strong>Guía Pedagógica (Padres y Docentes):</strong> ${p.guide}
+          <strong>Guía Pedagógica (Padres y Docentes):</strong> ${p.activityInstruction}
         </div>
       </div>
       <div class="activity-canvas">
-        <p style="font-size:21px;font-weight:bold;max-width:540px;line-height:1.5;">${p.content}</p>
-        <p style="font-family:monospace;font-size:13px;color:#475569;margin-top:12px;">[Lámina Ilustrada: ${p.theme}]</p>
-        <div class="tracing-line"></div>
-        <div class="tracing-line"></div>
-        <div class="tracing-line"></div>
+        <p style="font-size:17px;font-weight:bold;max-width:580px;line-height:1.4;margin-bottom:10px;">${p.childContent}</p>
+        <div style="width:100%;max-width:640px;margin:0 auto;">
+          ${renderWorksheetPageSvg(p, title)}
+        </div>
       </div>
       <div class="brand-header" style="border-top:2px solid #141414;border-bottom:none;padding-top:10px;">
         <span>Nombre del peque: ___________________________</span>
@@ -359,59 +359,43 @@ async function startServer() {
 </body>
 </html>`;
 
-    const otonoPages = [
-      {
-        num: 1,
-        heading: 'Lámina 1: Trazos del Bosque y Preescritura',
-        guide: 'Une cada hoja de otoño con su árbol siguiendo la línea de puntos con un lápiz o cera gruesa sin levantar la mano.',
-        content: '¡Ayuda a la ardilla Leo a llevar las 5 bellotas hasta su madriguera contando en voz alta: 1, 2, 3, 4 y 5!',
-        theme: 'Ardilla simpática de trazo grueso y 5 caminos punteados hacia las bellotas',
-      },
-      {
-        num: 2,
-        heading: 'Lámina 2: Recorta con Tijeras y Clasifica por Tamaño',
-        guide: 'Recorta por la línea discontinua las 6 figuras inferiores y pégalas de menor a mayor en las casillas superiores.',
-        content: 'Pequeño · Mediano · Grande — Observa las castañas y hojas del bosque y ordénalas.',
-        theme: '3 casillas superiores y 6 tarjetas recortables con icono de tijeras escolares',
-      },
-      {
-        num: 3,
-        heading: 'Lámina 3: Sumas Visuales Montessori con Setas y Piñas',
-        guide: 'Cuenta los elementos de cada grupo, repasa el número punteado y escribe el resultado dentro del círculo.',
-        content: '2 setas rojas + 3 piñas del pino = 5 tesoros de otoño. ¡Píntalos con tus colores favoritos!',
-        theme: 'Grupos visuales de elementos del bosque con números grandes punteados',
-      },
-      {
-        num: 4,
-        heading: 'Lámina 4: La Rueda de las Emociones en Casa y en el Cole',
-        guide: 'Señala qué carita representa cómo te sientes hoy y dibuja en el cuadro central tu momento favorito del día.',
-        content: 'Hoy me siento: Alegre · Tranquilo · Curioso · Cansado. ¡Todas mis emociones son importantes!',
-        theme: '4 caritas expresivas infantiles y marco decorado con hojas para dibujo libre',
-      },
-    ];
+    const generatedFiles: { name: string; data: Buffer }[] = [];
 
-    const flashcardsPages = [
-      {
-        num: 1,
-        heading: 'Lámina 1: Animales de la Granja y del Bosque (Farm & Forest)',
-        guide: 'Imprime en cartulina blanca, recorta las 4 tarjetas y juega a pronunciar el nombre en español e inglés.',
-        content: 'EL LEÓN / THE LION · LA OVEJA / THE SHEEP · EL CONEJO / THE RABBIT · EL PATO / THE DUCK',
-        theme: 'Cuadrícula de 4 tarjetas flashcards con borde de recorte e ilustración central',
-      },
-      {
-        num: 2,
-        heading: 'Lámina 2: Mi Rutina de Mañana y Noche (Daily Routines)',
-        guide: 'Coloca las tarjetas en la habitación del peque en el orden en que realiza cada hábito diario.',
-        content: 'DESAYUNAR / HAVE BREAKFAST · LAVARSE LOS DIENTES / BRUSH TEETH · LEER UN CUENTO / READ A BOOK',
-        theme: '4 tarjetas visuales de autonomía infantil estilo Montessori',
-      },
-    ];
+    for (const item of COMPLETE_ACTION_ALERTS) {
+      generatedFiles.push({
+        name: `${pfx}${item.recommendedFileNameBase}_Gumroad_A4.html`,
+        data: Buffer.from(
+          buildPrintableHtml(
+            item.assetTitle,
+            `${item.recommendedFileNameBase}_Gumroad_A4`,
+            item.ageRange,
+            'A4',
+            item.pages
+          ),
+          'utf8'
+        ),
+      });
 
-    const epubContent = `<?xml version="1.0" encoding="UTF-8"?>
+      generatedFiles.push({
+        name: `${pfx}${item.recommendedFileNameBase}_KDP_Interior_85x11.html`,
+        data: Buffer.from(
+          buildPrintableHtml(
+            item.assetTitle,
+            `${item.recommendedFileNameBase}_KDP_Interior_85x11`,
+            item.ageRange,
+            '8.5in 11in',
+            item.pages
+          ),
+          'utf8'
+        ),
+      });
+
+      if (item.formatType === 'EPUB_CUENTO') {
+        const epubContent = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" lang="es">
 <head>
-  <title>PTB_03_Cuento_Interactivo_Monstruo_Calma</title>
+  <title>${item.recommendedFileNameBase}</title>
   <style>
     body { font-family: Georgia, serif; max-width: 680px; margin: 40px auto; padding: 0 20px; line-height: 1.7; color: #1E293B; }
     h1, h2 { color: #0F172A; }
@@ -420,111 +404,51 @@ async function startServer() {
   </style>
 </head>
 <body>
-  <h1>El Monstruo de la Calma y el Frasco de Estrellas</h1>
-  <p><em>Creado por PaperTopBCN — Recursos Digitales Educativos (3–8 años)</em></p>
+  <h1>${item.assetTitle}</h1>
+  <p><em>Creado por PaperTopBCN — Recursos Digitales Educativos (${item.ageRange})</em></p>
+  ${item.pages
+    .map(
+      (p) => `
   <div class="chapter">
-    <h2>Capítulo 1: Cuando la Nube Roja Llega de Repente</h2>
-    <p>A veces, cuando las cosas no salen como queremos, aparece una nube rápida en la tripa. ¡Pero tenemos un superpoder secreto: la respiración de la estrella!</p>
-    <div class="activity"><strong>Actividad Interactiva:</strong> Lee este capítulo en voz suave y pide al peque que hinche la barriga como un globo tres veces.</div>
-  </div>
-  <div class="chapter">
-    <h2>Capítulo 2: El Frasco de la Calma Antes de Dormir</h2>
-    <p>Cada estrella que respiramos despacio ilumina nuestra habitación y nos prepara para soñar aventuras increíbles.</p>
-    <div class="activity"><strong>Actividad Interactiva:</strong> Pregúntale al niño qué 3 cosas bonitas han pasado hoy para guardarlas imaginariamente en su frasco.</div>
-  </div>
+    <h2>${p.heading}</h2>
+    <p>${p.childContent}</p>
+    <div style="margin:14px 0;border:2px solid #CBD5E1;border-radius:10px;padding:10px;background:#FFF;">
+      ${renderWorksheetPageSvg(p, item.assetTitle)}
+    </div>
+    <div class="activity"><strong>Actividad Interactiva:</strong> ${p.activityInstruction}</div>
+  </div>`
+    )
+    .join('')}
 </body>
 </html>`;
+        generatedFiles.push({
+          name: `${pfx}${item.recommendedFileNameBase}_Cuento_Interactivo.epub.xhtml`,
+          data: Buffer.from(epubContent, 'utf8'),
+        });
+      }
+    }
 
     const guiaTxt = `================================================================================
-PAPERTOPBCN (PTB) — CONTENIDOS APROBADOS CON TU OK Y GUÍA EXACTA DE SUBIDA
+PAPERTOPBCN (PTB) — TODOS LOS PRODUCTOS CON TODAS LAS LÁMINAS E ILUSTRACIONES SVG
 ================================================================================
 
-Aquí tienes los 3 productos digitales infantiles ya montados con sus nombres de
-archivo oficiales y las instrucciones exactas de dónde colgar cada uno:
+Este paquete incluye los 6 productos completos (42 láminas gráficas en total) con
+todas las ilustraciones, números punteados, recortables y las 30 flashcards bilingües:
 
---------------------------------------------------------------------------------
-PRODUCTO #1: Cuaderno Montessori de Otoño: Conteo, Trazos, Tijeras y Emociones
-Edad: 3–6 años | Precio recomendado: €11.90
---------------------------------------------------------------------------------
-1) Archivo Gumroad / Web (/PTB/descargas/):
-   Nombre: PTB_01_Cuaderno_Montessori_Otono_3_6_Anos_Gumroad_A4.html (o .pdf)
-   Dónde subirlo: https://app.gumroad.com/products -> New Product -> Digital Product
-
-2) Archivo Amazon KDP (Tapa Blanda 8.5x11" Sin Sangría):
-   Nombre: PTB_01_Cuaderno_Montessori_Otono_3_6_Anos_KDP_Interior_85x11.html (o .pdf)
-   Dónde subirlo: https://kdp.amazon.com/es_ES/bookshelf -> + Crear -> Libro de tapa blanda
-
-3) 7 Keywords SEO para copiar y pegar en KDP / Gumroad:
-   cuaderno montessori otono imprimir pdf, actividades preescolar 3 a 6 anos,
-   grafomotricidad y trazos infantiles, recortables tijeras motricidad fina,
-   educacion emocional ninos, busy book espanol imprimible, libro actividades infantil kdp
-
---------------------------------------------------------------------------------
-PRODUCTO #2: Pack 30 Flashcards Bilingües (Español-Inglés): Animales y Rutinas
-Edad: 2–5 años | Precio recomendado: €8.90
---------------------------------------------------------------------------------
-1) Archivo Gumroad / Pinterest:
-   Nombre: PTB_02_Flashcards_Bilingues_Animales_Rutinas_Gumroad_A4.html (o .pdf)
-   Dónde subirlo: Gumroad + Pin de Producto en Pinterest
-
---------------------------------------------------------------------------------
-PRODUCTO #3: Cuento Interactivo Ilustrado: El Monstruo de la Calma
-Edad: 3–8 años | Precio recomendado: €9.50
---------------------------------------------------------------------------------
-1) Archivo eBook Kindle / Apple Books:
-   Nombre: PTB_03_Cuento_Interactivo_Monstruo_Calma_Cuento_Interactivo.epub.xhtml
-   Dónde subirlo: Amazon KDP (Crear eBook Kindle) y Gumroad
+1) PTB_01_Cuaderno_Montessori_Otono_3_6_Anos (10 Láminas Completas A4 + KDP 8.5x11")
+2) PTB_02_Flashcards_Bilingues_Animales_Rutinas (8 Láminas Completas = 30 Tarjetas #01-#30 + 2 Extra)
+3) PTB_03_Cuento_Interactivo_Monstruo_Calma (6 Capítulos Ilustrados en EPUB + A4 + KDP)
+4) PTB_04_Busy_Book_Viajes_Restaurantes (6 Láminas Recortables con Velcro)
+5) PTB_05_Dinosaurios_Espacio_Colorear_KDP (6 Láminas Edición KDP 8.5x11" y A4)
+6) PTB_06_Pack_Matematico_Manipulativo_Tiendecita (6 Láminas Matemáticas Completas)
 `;
 
-    return [
-      {
-        name: `${pfx}GUIA_NOMBRES_Y_DONDE_COLGAR.txt`,
-        data: Buffer.from(guiaTxt, 'utf8'),
-      },
-      {
-        name: `${pfx}PTB_01_Cuaderno_Montessori_Otono_3_6_Anos_Gumroad_A4.html`,
-        data: Buffer.from(
-          buildPrintableHtml(
-            'Cuaderno Montessori de Otoño (3-6 años)',
-            'PTB_01_Cuaderno_Montessori_Otono_3_6_Anos_Gumroad_A4',
-            '3–6 años',
-            'A4',
-            otonoPages
-          ),
-          'utf8'
-        ),
-      },
-      {
-        name: `${pfx}PTB_01_Cuaderno_Montessori_Otono_3_6_Anos_KDP_Interior_85x11.html`,
-        data: Buffer.from(
-          buildPrintableHtml(
-            'Cuaderno Montessori de Otoño KDP 8.5x11"',
-            'PTB_01_Cuaderno_Montessori_Otono_3_6_Anos_KDP_Interior_85x11',
-            '3–6 años',
-            '8.5in 11in',
-            otonoPages
-          ),
-          'utf8'
-        ),
-      },
-      {
-        name: `${pfx}PTB_02_Flashcards_Bilingues_Animales_Rutinas_Gumroad_A4.html`,
-        data: Buffer.from(
-          buildPrintableHtml(
-            'Pack Flashcards Bilingües (Español-Inglés)',
-            'PTB_02_Flashcards_Bilingues_Animales_Rutinas_Gumroad_A4',
-            '2–5 años',
-            'A4',
-            flashcardsPages
-          ),
-          'utf8'
-        ),
-      },
-      {
-        name: `${pfx}PTB_03_Cuento_Interactivo_Monstruo_Calma_Cuento_Interactivo.epub.xhtml`,
-        data: Buffer.from(epubContent, 'utf8'),
-      },
-    ];
+    generatedFiles.unshift({
+      name: `${pfx}GUIA_NOMBRES_Y_DONDE_COLGAR.txt`,
+      data: Buffer.from(guiaTxt, 'utf8'),
+    });
+
+    return generatedFiles;
   }
 
   // 0A. Download Ready-to-Upload FTP ZIP Bundle (/PTB + /PTB/descargas/ with all approved content!)
@@ -942,7 +866,7 @@ Devuelve un JSON con:
 - assetTitle: Título comercial optimizado
 - recommendedFileNameBase: Nombre base exacto sin espacios ni tildes (ej. "PTB_Cuaderno_Montessori_Dinosaurios_3_6_Anos")
 - autonomousSummary: Qué ha montado y creado el portal automáticamente ahora mismo (páginas, ejercicios, textos, láminas)
-- pages: Array de 4 páginas/láminas completas con { pageNumber, heading, activityInstruction, childContent, illustrationTheme }
+- pages: Array completo con TODAS las páginas/láminas anunciadas en el título (mínimo 6 a 10 láminas variadas: Trazos, Tijeras, Sumas, Emociones, Laberinto, Sombras, Series Lógicas, Simetría, Colorear por Números y Conteo 1-10) con { pageNumber, heading, activityInstruction, childContent, illustrationTheme }
 - canAutoPublishPortals: Array de portales donde el anuncio/post se autopublicará en cuanto el usuario dé el OK (ej. ["X (Twitter)", "Instagram", "Pinterest", "Reddit", "TikTok"])
 - manualActionRequired: Boolean indicando si algún marketplace requiere subir el archivo descargado
 - notificationAlert: {
