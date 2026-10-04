@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-serif: 'Newsreader', Georgia, serif;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: #E2E8F0;
+    background-color: #0B0F1A;
+  }
+}
+
+.font-ui {
+  font-family: var(--font-sans);
+}
+
+.font-mono-code {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.font-editorial {
+  font-family: var(--font-sans);
+}
+
+/* CortX Dark Mode Surfaces & Cards (from uploaded reference screenshot) */
+.cortx-canvas {
+  background-color: #0B0F1A;
+  color: #E2E8F0;
+}
+
+.cortx-sidebar {
+  background-color: #0E1322;
+  border-color: #1E293B;
+}
+
+.cortx-panel {
+  background-color: #111827;
+  border: 1px solid #1E293B;
+  border-radius: 8px;
+}
+
+.cortx-card {
+  background-color: #151E31;
+  border: 1px solid #24324B;
+  border-radius: 8px;
+  transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.cortx-card:hover {
+  border-color: #38BDF8;
+}
+
+/* Multi-spectrum top progress bar from CortX screenshot */
+.cortx-spectrum-bar {
+  height: 4px;
+  background: linear-gradient(90deg, #22C55E 0%, #10B981 35%, #06B6D4 70%, #2563EB 100%);
+}
+
+/* CortX Action Buttons */
+.cortx-btn {
+  background-color: #1A2438;
+  border: 1px solid #2E3F5C;
+  color: #E2E8F0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: background-color 140ms ease, border-color 140ms ease, transform 120ms ease;
+}
+
+.cortx-btn:hover:not(:disabled) {
+  background-color: #23304A;
+  border-color: #38BDF8;
+  color: #FFFFFF;
+}
+
+.cortx-btn-primary {
+  background: linear-gradient(135deg, #0284C7 0%, #2563EB 100%);
+  border: 1px solid #38BDF8;
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(14, 165, 233, 0.25);
+  transition: opacity 140ms ease, transform 120ms ease;
+}
+
+.cortx-btn-primary:hover:not(:disabled) {
+  opacity: 0.94;
+}
+
+.cortx-btn-emerald {
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #34D399;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.cortx-btn-emerald:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.24);
+}
+
+.cortx-btn-amber {
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.45);
+  color: #FBBF24;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+/* Custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0F1A;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #24324B;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #38BDF8;
+}

@@ -1,0 +1,6 @@
+{
+  "name": "PaperTopBCN — Polsia AI Command Center",
+  "description": "Centro de mando autónomo estilo Polsia para PaperTopBCN: gestión de productos digitales infantiles, pedidos, catálogos, análisis de ventas en tiempo real, detección diaria de tendencias y autopublicación multicanal (X, Instagram, Gumroad, Amazon KDP, Canva, Reddit, Pinterest, TikTok).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
