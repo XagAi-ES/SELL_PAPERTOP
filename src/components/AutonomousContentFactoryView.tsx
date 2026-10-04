@@ -23,6 +23,7 @@ import {
 import {
   GeneratedAssetPage,
   renderWorksheetPageSvg,
+  ensureCoverAndMin20ExercisePages,
 } from '../utils/worksheetSvgEngine';
 
 export type { GeneratedAssetPage };
@@ -132,6 +133,13 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
         ? sanitizeFileNameBase(data.recommendedFileNameBase, alerts.length + 1)
         : sanitizeFileNameBase(data.assetTitle || titleInput, alerts.length + 1);
 
+      const completePages = ensureCoverAndMin20ExercisePages(
+        data.assetTitle || titleInput,
+        ageRange,
+        formatType,
+        Array.isArray(data.pages) ? data.pages : []
+      );
+
       const newAlert: ActionAlertItem = {
         id: `alert-${Date.now()}`,
         assetTitle: data.assetTitle || titleInput,
@@ -146,71 +154,32 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
         approvalStatus: 'PENDIENTE_OK',
         autonomousSummary:
           data.autonomousSummary ||
-          'El Agente IA ha redactado el contenido pedagógico infantil y el Motor de Maquetación de PaperTopBCN ha montado las 4 láminas con guías de trazo, recorte y estructura de impresión A4 / KDP 8.5x11".',
+          'El Agente IA y el Motor Gráfico Vectorial de PaperTopBCN han montado la Página 0 (Portada Principal) + 20 páginas completas de ejercicios infantiles listas en A4 y KDP 8.5x11".',
         canAutoPublishPortals: Array.isArray(data.canAutoPublishPortals)
           ? data.canAutoPublishPortals
           : ['X (Twitter)', 'Instagram', 'Pinterest', 'Reddit', 'TikTok'],
         manualActionRequired: true,
         whatToDo:
           data.notificationAlert?.whatToDo ||
-          `1. Revisa la previsualización de las láminas aquí mismo y pulsa "DAR EL OK". 2. Descarga el archivo ya nombrado (${fileBase}_Gumroad_A4.pdf o ${fileBase}_KDP_85x11.pdf). 3. Súbelo en Gumroad y Amazon KDP.`,
+          `1. Revisa la Portada (Página 0) y las 20 páginas de ejercicios arriba y pulsa "DAR EL OK". 2. Descarga el archivo ya nombrado (${fileBase}_Gumroad_A4.pdf o ${fileBase}_KDP_85x11.pdf). 3. Súbelo en Gumroad y Amazon KDP.`,
         whereToPublish:
           data.notificationAlert?.whereToPublish ||
           'Gumroad (app.gumroad.com/products > New Product) · Amazon KDP (kdp.amazon.com > Crear libro de tapa blanda 8.5x11") · FTP (/PTB/descargas/)',
         whatWeNeedFromUser:
           data.notificationAlert?.whatWeNeedFromUser ||
-          `1) Que previsualices las 4 láminas montadas abajo y nos des el "OK". 2) Que confirmes el precio (€${suggestedPrice.toFixed(2)}). 3) Que subas el archivo descargado con el nombre exacto "${fileBase}_Gumroad_A4.pdf" en tu cuenta de Gumroad/KDP.`,
+          `1) Que previsualices la Portada (Pág. 0) y las 20 páginas de ejercicios abajo y nos des el "OK". 2) Que confirmes el precio (€${suggestedPrice.toFixed(2)}). 3) Que subas el archivo descargado con el nombre exacto "${fileBase}_Gumroad_A4.pdf" en tu cuenta de Gumroad/KDP.`,
         seoKeywords: Array.isArray(data.notificationAlert?.seoKeywords)
           ? data.notificationAlert.seoKeywords
           : [
               'actividades montessori niños 3 a 6 años',
-              'cuaderno imprimible infantil pdf',
+              'cuaderno imprimible infantil 20 paginas pdf',
               'trazos y preescritura preescolar',
               'educacion emocional infantil',
               'busy book imprimible español',
               'libro colorear trazo grueso kdp',
               'recursos docentes infantil',
             ],
-        pages: Array.isArray(data.pages)
-          ? data.pages
-          : [
-              {
-                pageNumber: 1,
-                heading: 'Lámina 1: Trazos y Caminos Preescritura',
-                activityInstruction:
-                  'Sigue la línea de puntos con lápiz o rotulador grueso desde el inicio hasta la meta sin levantar la mano.',
-                childContent:
-                  '¡Ayuda a nuestro pequeño explorador a recorrer el sendero mágico contando del 1 al 5 en voz alta!',
-                illustrationTheme: 'Camino punteado curvo con 5 estrellas numeradas de trazo grueso',
-              },
-              {
-                pageNumber: 2,
-                heading: 'Lámina 2: Recorta y Clasifica por Tamaños',
-                activityInstruction:
-                  'Recorta con tijeras de punta redonda las 6 fichas inferiores y pégalas en su casilla correspondiente.',
-                childContent:
-                  'Pequeño · Mediano · Grande — Observa con atención y ordena cada figura de menor a mayor.',
-                illustrationTheme: '3 casillas superiores y 6 tarjetas recortables con borde de tijera',
-              },
-              {
-                pageNumber: 3,
-                heading: 'Lámina 3: Sumas Visuales y Conteo Montessori',
-                activityInstruction:
-                  'Cuenta las figuras de cada recuadro, escribe el número en el círculo y colorea las ilustraciones.',
-                childContent:
-                  '¿Cuántos elementos hay en total? Suma con los dedos y repasa el número punteado.',
-                illustrationTheme: 'Bloques visuales de suma (2 + 3 = 5) con números punteados para repasar',
-              },
-              {
-                pageNumber: 4,
-                heading: 'Lámina 4: Termómetro de las Emociones y Calma',
-                activityInstruction:
-                  'Señala cómo te sientes hoy y dibuja en el recuadro central qué te hace sentir tranquilo y feliz.',
-                childContent:
-                  'Alegría · Calma · Sorpresa · Cansancio — Todas las emociones son válidas y aprendemos a escucharlas.',
-                illustrationTheme: '4 caritas expresivas infantiles para colorear y marco de dibujo libre',
-              },
-            ],
+        pages: completePages,
         resolved: false,
       };
 
@@ -219,6 +188,42 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
       setSelectedPageIdx(0);
     } catch (err) {
       console.error(err);
+      // Fallback autonomo sin cuota para no bloquear nunca la creacion de Portada + 20 paginas
+      const fallbackBase = sanitizeFileNameBase(titleInput, alerts.length + 1);
+      const fallbackAlert: ActionAlertItem = {
+        id: `alert-${Date.now()}`,
+        assetTitle: titleInput,
+        recommendedFileNameBase: fallbackBase,
+        formatType,
+        ageRange,
+        suggestedPriceEur: suggestedPrice,
+        createdAt: new Date().toLocaleTimeString('es-ES', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        approvalStatus: 'PENDIENTE_OK',
+        autonomousSummary:
+          'Creado autónomamente con el Motor Gráfico Vectorial Local (0 cuota API): incluye Página 0 (Portada Principal) + 20 páginas completas de ejercicios infantiles.',
+        canAutoPublishPortals: ['X (Twitter)', 'Instagram', 'Pinterest', 'Reddit', 'TikTok'],
+        manualActionRequired: true,
+        whatToDo: `Revisa la Portada (Página 0) y las 20 páginas de ejercicios en el visor, pulsa "DAR EL OK" y descarga ${fallbackBase}_Gumroad_A4.html.`,
+        whereToPublish: 'Gumroad · Amazon KDP (8.5x11") · Carpeta FTP /PTB/descargas/',
+        whatWeNeedFromUser: 'Tu OK tras previsualizar la Portada (Página 0) y las 20 láminas de ejercicios.',
+        seoKeywords: [
+          'cuaderno montessori 20 paginas pdf',
+          'actividades infantiles imprimir',
+          'grafomotricidad y trazos preescolar',
+          'recortables tijeras ninos',
+          'sumas visuales montessori',
+          'libro actividades kdp espanol',
+          'papertopbcn recursos educativos',
+        ],
+        pages: ensureCoverAndMin20ExercisePages(titleInput, ageRange, formatType, []),
+        resolved: false,
+      };
+      onAddAlert(fallbackAlert);
+      setActivePreviewAlertId(fallbackAlert.id);
+      setSelectedPageIdx(0);
     } finally {
       setIsGenerating(false);
     }
@@ -318,7 +323,7 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
       <div>
         <div class="brand-header">
           <span>PAPERTOPBCN · RECURSOS INFANTILES (${alertItem.ageRange})</span>
-          <span>LÁMINA 0${p.pageNumber} · ${alertItem.recommendedFileNameBase}</span>
+          <span>${p.pageNumber === 0 ? '★ PORTADA PRINCIPAL (PÁGINA 00)' : `EJERCICIO PÁGINA ${String(p.pageNumber).padStart(2, '0')} DE ${alertItem.pages.filter((x) => x.pageNumber > 0).length}`} · ${alertItem.recommendedFileNameBase}</span>
         </div>
         <h1>${p.heading}</h1>
         <div class="instruction-box">
@@ -636,10 +641,10 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
               <div className="bg-[#0B0F1A] border border-emerald-500/40 rounded-lg p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
                 <div className="flex items-center gap-2">
                   <span className="cortx-btn-emerald px-2 py-0.5 font-mono-code text-[10px]">
-                    🎨 MOTOR GRÁFICO VECTORIAL ACTIVO · 0 CUOTA API
+                    🎨 PORTADA (PÁG. 0) + {activePreviewAlert.pages.filter((p) => p.pageNumber > 0).length} PÁGINAS DE EJERCICIOS
                   </span>
                   <span className="text-slate-300">
-                    Las <strong>{activePreviewAlert.pages.length} láminas anunciadas</strong> tienen su solución gráfica creada e incrustada sin esperar cuotas.
+                    Solución gráfica vectorial creada e incrustada en las <strong>{activePreviewAlert.pages.length} láminas</strong> (0 cuota API).
                   </span>
                 </div>
                 <button
@@ -649,11 +654,11 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
                 >
                   {viewAllPagesGrid
                     ? '📄 VER LÁMINA INDIVIDUAL EN GRANDE'
-                    : `👁️ VER TODAS LAS ${activePreviewAlert.pages.length} LÁMINAS A LA VEZ`}
+                    : `👁️ VER PORTADA + ${activePreviewAlert.pages.filter((p) => p.pageNumber > 0).length} PÁGINAS A LA VEZ`}
                 </button>
               </div>
 
-              {/* Page Selector Tabs (All announced sheets!) */}
+              {/* Page Selector Tabs (Page 0 Cover + 20 Exercise Pages!) */}
               <div className="flex flex-wrap items-center justify-between gap-2 bg-[#0B0F1A] p-2.5 rounded-lg border border-[#1E293B]">
                 <div className="flex flex-wrap items-center gap-1.5">
                   {activePreviewAlert.pages.map((pg, idx) => (
@@ -666,11 +671,17 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
                       }}
                       className={`px-2.5 py-1.5 rounded font-mono-code text-xs transition-all ${
                         !viewAllPagesGrid && selectedPageIdx === idx
-                          ? 'cortx-btn-primary font-bold'
+                          ? pg.pageNumber === 0
+                            ? 'cortx-btn-amber font-bold'
+                            : 'cortx-btn-primary font-bold'
+                          : pg.pageNumber === 0
+                          ? 'cortx-btn text-amber-300 border-amber-500/50'
                           : 'cortx-btn text-slate-300'
                       }`}
                     >
-                      Lámina {String(pg.pageNumber).padStart(2, '0')}
+                      {pg.pageNumber === 0
+                        ? '🌟 Pág. 00 · PORTADA'
+                        : `Pág. ${String(pg.pageNumber).padStart(2, '0')}`}
                     </button>
                   ))}
                 </div>
@@ -715,7 +726,11 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
                       className="cursor-pointer bg-[#FFFDF9] text-[#141414] border-2 border-[#141414] rounded-xl p-3.5 shadow-lg hover:border-cyan-500 transition-all space-y-2"
                     >
                       <div className="flex items-center justify-between border-b border-dashed border-[#141414] pb-1 font-mono-code text-[10px] text-slate-700">
-                        <span>LÁMINA {String(pg.pageNumber).padStart(2, '0')} DE {String(activePreviewAlert.pages.length).padStart(2, '0')}</span>
+                        <span>
+                          {pg.pageNumber === 0
+                            ? '🌟 PÁGINA 00 · PORTADA PRINCIPAL'
+                            : `EJERCICIO PÁGINA ${String(pg.pageNumber).padStart(2, '0')} DE ${activePreviewAlert.pages.filter((p) => p.pageNumber > 0).length}`}
+                        </span>
                         <span className="text-sky-700 font-bold">Clic para ampliar ↗</span>
                       </div>
                       <h4 className="text-sm font-bold font-serif text-[#141414] line-clamp-1">
@@ -739,8 +754,9 @@ export const AutonomousContentFactoryView: React.FC<AutonomousContentFactoryView
                     <div className="flex items-center justify-between border-b-2 border-dashed border-[#141414] pb-2.5 font-mono-code text-xs text-slate-700">
                       <span>PAPERTOPBCN · EDAD: {activePreviewAlert.ageRange}</span>
                       <span className="font-bold text-slate-900">
-                        LÁMINA {String(currentPage.pageNumber).padStart(2, '0')} DE{' '}
-                        {String(activePreviewAlert.pages.length).padStart(2, '0')} (TODAS LAS LÁMINAS INCLUIDAS)
+                        {currentPage.pageNumber === 0
+                          ? '🌟 PÁGINA 00 · PORTADA PRINCIPAL OFICIAL'
+                          : `EJERCICIO PÁGINA ${String(currentPage.pageNumber).padStart(2, '0')} DE ${activePreviewAlert.pages.filter((p) => p.pageNumber > 0).length} (+ PORTADA PÁG. 0)`}
                       </span>
                     </div>
 

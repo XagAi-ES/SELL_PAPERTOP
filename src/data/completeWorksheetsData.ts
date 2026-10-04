@@ -1,12 +1,13 @@
 import { ActionAlertItem } from '../components/AutonomousContentFactoryView';
+import { ensureCoverAndMin20ExercisePages } from '../utils/worksheetSvgEngine';
 
-export const COMPLETE_ACTION_ALERTS: ActionAlertItem[] = [
+const RAW_COMPLETE_ACTION_ALERTS: ActionAlertItem[] = [
   // =========================================================================
-  // PRODUCTO 1: CUADERNO MONTESSORI DE OTOÑO (10 LÁMINAS COMPLETAS)
+  // PRODUCTO 1: CUADERNO MONTESSORI DE OTOÑO (PORTADA PÁG. 0 + 20 PÁGINAS DE EJERCICIOS)
   // =========================================================================
   {
     id: 'alert-init-1',
-    assetTitle: 'Cuaderno Montessori de Otoño: 10 Láminas de Conteo, Trazos, Tijeras, Lógica y Emociones (3–6 años)',
+    assetTitle: 'Cuaderno Montessori de Otoño: Portada + 20 Páginas de Ejercicios (Conteo, Trazos, Tijeras, Lógica y Emociones · 3–6 años)',
     recommendedFileNameBase: 'PTB_01_Cuaderno_Montessori_Otono_3_6_Anos',
     formatType: 'PDF_IMPRIMIBLE',
     ageRange: '3–6 años',
@@ -14,7 +15,7 @@ export const COMPLETE_ACTION_ALERTS: ActionAlertItem[] = [
     createdAt: 'Hoy · 09:40',
     approvalStatus: 'APROBADO_OK',
     autonomousSummary:
-      'El Agente IA de PaperTopBCN y el Motor Gráfico Vectorial SVG han montado las 10 láminas completas anunciadas (Trazos, Recorte con Tijeras, Sumas Visuales, Rueda de Emociones, Laberinto, Sombras, Series Lógicas, Simetría, Colorear por Números y Conteo 1–10) listas en A4 y KDP 8.5x11" sin consumir cuota de API.',
+      'El Agente IA de PaperTopBCN y el Motor Gráfico Vectorial SVG han montado la Página 0 (Portada Principal Oficial) + 20 páginas completas de ejercicios (Trazos, Recorte con Tijeras, Sumas Visuales, Rueda de Emociones, Laberinto, Sombras, Series Lógicas, Simetría, Colorear por Números, Conteo 1–10, Vocales, Reloj de Rutinas y Diploma Final) listas en A4 y KDP 8.5x11".',
     canAutoPublishPortals: ['X (Twitter)', 'Instagram', 'Pinterest', 'Reddit', 'TikTok'],
     manualActionRequired: true,
     whatToDo:
@@ -646,4 +647,14 @@ export const COMPLETE_ACTION_ALERTS: ActionAlertItem[] = [
     resolved: false,
   },
 ];
+
+export const COMPLETE_ACTION_ALERTS: ActionAlertItem[] = RAW_COMPLETE_ACTION_ALERTS.map((item) => ({
+  ...item,
+  pages: ensureCoverAndMin20ExercisePages(
+    item.assetTitle,
+    item.ageRange,
+    item.formatType,
+    item.pages
+  ),
+}));
 

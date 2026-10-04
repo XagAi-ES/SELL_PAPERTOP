@@ -5,6 +5,7 @@ export interface GeneratedAssetPage {
   childContent: string;
   illustrationTheme: string;
   visualType?:
+    | 'COVER_PAGE'
     | 'TRACING_PATHS'
     | 'SCISSORS_CUTOUT'
     | 'MATH_SUMS'
@@ -17,6 +18,9 @@ export interface GeneratedAssetPage {
     | 'COUNTING_1_10'
     | 'FLASHCARDS_GRID'
     | 'STORY_ILLUSTRATION'
+    | 'LETTER_TRACING_AEIOU'
+    | 'CLOCK_ROUTINES'
+    | 'DIPLOMA_FINAL'
     | 'DINOSAUR_TRACE'
     | 'BUSYBOOK_VELCRO'
     | 'MATH_SHOP';
@@ -107,6 +111,41 @@ function renderMiniVectorIcon(type: string, cx: number, cy: number, scale: numbe
  */
 export function renderWorksheetPageSvg(page: GeneratedAssetPage, productTitle: string = ''): string {
   const headingLower = (page.heading + ' ' + page.illustrationTheme + ' ' + productTitle).toLowerCase();
+
+  // 0. COVER PAGE / LÁMINA PRINCIPAL (PÁGINA 0 - PORTADA OFICIAL)
+  if (page.pageNumber === 0 || page.visualType === 'COVER_PAGE' || headingLower.includes('portada')) {
+    const cleanTitle = (productTitle || page.heading || 'Cuaderno Infantil PaperTopBCN').slice(0, 52);
+    const subTitle = (productTitle || page.heading).length > 52 ? (productTitle || page.heading).slice(52, 108) : 'Edición Oficial Ilustrada · Portada + 20 Láminas de Ejercicios';
+    return `<svg viewBox="0 0 680 420" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#FEF3C7;border-radius:12px;">
+      <!-- Outer & Inner Editorial Cover Borders -->
+      <rect x="14" y="14" width="652" height="392" rx="16" fill="#FFFDF9" stroke="#141414" stroke-width="4"/>
+      <rect x="26" y="26" width="628" height="368" rx="12" fill="none" stroke="#F59E0B" stroke-width="2.5" stroke-dasharray="10 6"/>
+
+      <!-- Top Brand Ribbon -->
+      <rect x="170" y="38" width="340" height="30" rx="15" fill="#141414"/>
+      <text x="340" y="58" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#FEF08A">★ PAPERTOPBCN · PORTADA OFICIAL (PÁGINA 0) ★</text>
+
+      <!-- Cover Title & Subtitle -->
+      <text x="340" y="102" text-anchor="middle" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#0F172A">${cleanTitle}</text>
+      <text x="340" y="126" text-anchor="middle" font-family="Georgia, serif" font-size="14" fill="#0284C7" font-weight="bold">${subTitle}</text>
+
+      <!-- Central Hero Medallion with Characters & Icons -->
+      <rect x="75" y="142" width="530" height="172" rx="18" fill="#FFFBEB" stroke="#141414" stroke-width="3"/>
+      <circle cx="340" cy="228" r="68" fill="#E0F2FE" stroke="#141414" stroke-width="2.5"/>
+      ${renderMiniVectorIcon('squirrel', 205, 215, 1.45)}
+      ${renderMiniVectorIcon('monster', 340, 222, 1.55)}
+      ${renderMiniVectorIcon('dino', 475, 215, 1.45)}
+      ${renderMiniVectorIcon('star', 120, 175, 0.9)}
+      ${renderMiniVectorIcon('mushroom', 125, 275, 0.9)}
+      ${renderMiniVectorIcon('acorn', 555, 175, 0.9)}
+      ${renderMiniVectorIcon('leaf', 555, 275, 0.9)}
+
+      <!-- Bottom Ownership Box for the Child -->
+      <rect x="95" y="328" width="490" height="50" rx="10" fill="#FFFFFF" stroke="#141414" stroke-width="2.5"/>
+      <text x="340" y="348" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#475569">ESTE CUADERNO DE 20 LÁMINAS PERTENECE A:</text>
+      <line x1="160" y1="368" x2="520" y2="368" stroke="#141414" stroke-width="2" stroke-dasharray="6 4"/>
+    </svg>`;
+  }
 
   // 1. FLASHCARDS GRID (4 Cut-out Bilingual Cards per sheet)
   if (page.visualType === 'FLASHCARDS_GRID' || page.flashcardsData || headingLower.includes('flashcard') || headingLower.includes('tarjetas')) {
@@ -445,9 +484,82 @@ export function renderWorksheetPageSvg(page: GeneratedAssetPage, productTitle: s
     </svg>`;
   }
 
+  // 6G. LETTER TRACING A-E-I-O-U (Vocales y Letras Punteadas)
+  if (page.visualType === 'LETTER_TRACING_AEIOU' || headingLower.includes('vocal') || headingLower.includes('letra') || headingLower.includes('abecedario')) {
+    const letters = page.pageNumber % 2 === 0 ? ['A', 'E', 'I', 'O', 'U'] : ['M', 'P', 'S', 'L', 'T'];
+    return `<svg viewBox="0 0 680 390" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#FFFDF9;border-radius:10px;">
+      <text x="340" y="26" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#1E293B">REPASA LAS LETRAS GIGANTES PUNTEADAS Y PRACTICA EN LA PAUTA MONTESSORI</text>
+      ${letters
+        .map((ltr, idx) => {
+          const x = 30 + idx * 126;
+          return `<g>
+            <rect x="${x}" y="44" width="112" height="145" rx="12" fill="#FEF3C7" stroke="#141414" stroke-width="2"/>
+            <text x="${x + 56}" y="142" text-anchor="middle" font-family="Georgia, serif" font-size="82" font-weight="bold" fill="none" stroke="#141414" stroke-width="2.5" stroke-dasharray="5 5">${ltr}</text>
+          </g>`;
+        })
+        .join('')}
+      <!-- Calligraphy Writing Guides -->
+      ${[225, 285, 345]
+        .map(
+          (y) => `<g>
+          <line x1="40" y1="${y - 16}" x2="640" y2="${y - 16}" stroke="#94A3B8" stroke-width="1.5"/>
+          <line x1="40" y1="${y}" x2="640" y2="${y}" stroke="#0284C7" stroke-width="2" stroke-dasharray="6 5"/>
+          <line x1="40" y1="${y + 16}" x2="640" y2="${y + 16}" stroke="#141414" stroke-width="2"/>
+          <text x="65" y="${y + 12}" font-family="Georgia, serif" font-size="34" fill="none" stroke="#64748B" stroke-width="1.8" stroke-dasharray="4 4">${letters.join('   ')}</text>
+        </g>`
+        )
+        .join('')}
+    </svg>`;
+  }
+
+  // 6H. CLOCK & DAILY ROUTINES (Reloj Montessori de Hábitos)
+  if (page.visualType === 'CLOCK_ROUTINES' || headingLower.includes('reloj') || headingLower.includes('hora')) {
+    return `<svg viewBox="0 0 680 390" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#FFFDF9;border-radius:10px;">
+      <text x="340" y="26" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#1E293B">DIBUJA LAS AGUJAS DEL RELOJ Y UNE CADA MOMENTO DEL DÍA CON SU HÁBITO</text>
+      ${[
+        { cx: 135, hour: '08:00 · MAÑANA', label: 'Desayunar y vestir' },
+        { cx: 340, hour: '14:00 · MEDIODÍA', label: 'Comer y jugar' },
+        { cx: 545, hour: '20:30 · NOCHE', label: 'Cuento y dormir' },
+      ]
+        .map(
+          (clk) => `<g>
+          <rect x="${clk.cx - 90}" y="48" width="180" height="310" rx="14" fill="#FFFFFF" stroke="#141414" stroke-width="2.5"/>
+          <circle cx="${clk.cx}" cy="155" r="68" fill="#FEFCE8" stroke="#141414" stroke-width="3"/>
+          <circle cx="${clk.cx}" cy="155" r="5" fill="#141414"/>
+          <text x="${clk.cx}" y="104" text-anchor="middle" font-size="13" font-weight="bold">12</text>
+          <text x="${clk.cx + 54}" y="160" text-anchor="middle" font-size="13" font-weight="bold">3</text>
+          <text x="${clk.cx}" y="214" text-anchor="middle" font-size="13" font-weight="bold">6</text>
+          <text x="${clk.cx - 54}" y="160" text-anchor="middle" font-size="13" font-weight="bold">9</text>
+          <line x1="${clk.cx}" y1="155" x2="${clk.cx}" y2="115" stroke="#EF4444" stroke-width="3" stroke-dasharray="4 3"/>
+          <line x1="${clk.cx}" y1="155" x2="${clk.cx + 35}" y2="155" stroke="#0284C7" stroke-width="3" stroke-dasharray="4 3"/>
+          <text x="${clk.cx}" y="268" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#0284C7">${clk.hour}</text>
+          <text x="${clk.cx}" y="295" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-weight="bold" fill="#141414">${clk.label}</text>
+        </g>`
+        )
+        .join('')}
+    </svg>`;
+  }
+
+  // 6I. DIPLOMA FINAL (Lámina 20: Gran Diploma de Honor)
+  if (page.visualType === 'DIPLOMA_FINAL' || headingLower.includes('diploma')) {
+    return `<svg viewBox="0 0 680 390" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#FEF3C7;border-radius:10px;">
+      <rect x="20" y="20" width="640" height="350" rx="16" fill="#FFFFFF" stroke="#141414" stroke-width="4"/>
+      <rect x="34" y="34" width="612" height="322" rx="12" fill="none" stroke="#F59E0B" stroke-width="3" stroke-dasharray="8 6"/>
+      ${renderMiniVectorIcon('star', 95, 95, 1.3)}
+      ${renderMiniVectorIcon('star', 585, 95, 1.3)}
+      <text x="340" y="90" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-weight="bold" fill="#141414">★ GRAN DIPLOMA MONTESSORI ★</text>
+      <text x="340" y="122" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#B45309">OTORGADO CON ORGULLO POR PAPERTOPBCN A:</text>
+      <line x1="140" y1="178" x2="540" y2="178" stroke="#141414" stroke-width="3" stroke-dasharray="6 4"/>
+      <text x="340" y="218" text-anchor="middle" font-family="Georgia, serif" font-size="16" fill="#334155">Por haber completado con creatividad, paciencia y alegría las 20 láminas de actividades.</text>
+      ${renderMiniVectorIcon('squirrel', 220, 285, 1.1)}
+      ${renderMiniVectorIcon('monster', 340, 285, 1.1)}
+      ${renderMiniVectorIcon('dino', 460, 285, 1.1)}
+    </svg>`;
+  }
+
   // 7. DEFAULT / TRACING PATHS (Lámina 1: Trazos del Bosque y Preescritura — 5 caminos punteados)
   return `<svg viewBox="0 0 680 400" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="background:#FFFDF9;border-radius:10px;">
-    <text x="340" y="24" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#475569">✏️ TRAZA CON LÁPIZ DE IZQUIERDA A DERECHA SIN LEVANTAR LA MANO (LÁMINA 0${page.pageNumber})</text>
+    <text x="340" y="24" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#475569">✏️ TRAZA CON LÁPIZ DE IZQUIERDA A DERECHA SIN LEVANTAR LA MANO (LÁMINA ${String(page.pageNumber).padStart(2, '0')})</text>
     ${[1, 2, 3, 4, 5]
       .map((rowNum, idx) => {
         const y = 66 + idx * 68;
@@ -467,4 +579,196 @@ export function renderWorksheetPageSvg(page: GeneratedAssetPage, productTitle: s
       })
       .join('')}
   </svg>`;
+}
+
+/**
+ * Guarantees that EVERY digital product has:
+ * - Página 0 (Lámina Principal / Portada Oficial Ilustrada, pageNumber = 0)
+ * - Minimum 20 Exercise Pages (Lámina 01 to Lámina 20, pageNumber = 1..20)
+ * = Minimum 21 sheets in total!
+ */
+export function ensureCoverAndMin20ExercisePages(
+  assetTitle: string,
+  ageRange: string,
+  formatType: 'PDF_IMPRIMIBLE' | 'EPUB_CUENTO' | 'JPG_FLASHCARDS',
+  rawPages: GeneratedAssetPage[]
+): GeneratedAssetPage[] {
+  // 1. Build or preserve Page 0 (Portada Principal)
+  const existingCover = rawPages.find((p) => p.pageNumber === 0 || p.visualType === 'COVER_PAGE');
+  const coverPage: GeneratedAssetPage = existingCover
+    ? { ...existingCover, pageNumber: 0, visualType: 'COVER_PAGE' }
+    : {
+        pageNumber: 0,
+        heading: `Página 0 (Portada Principal): ${assetTitle}`,
+        activityInstruction:
+          `Portada oficial a color e interior imprimible (${ageRange}). Escribe el nombre del peque en el recuadro inferior antes de comenzar las 20 láminas de actividades.`,
+        childContent:
+          `¡Bienvenido/a a tu cuaderno de 20 láminas interactivas de PaperTopBCN! Escribe tu nombre y prepárate para aprender jugando.`,
+        illustrationTheme: 'Portada oficial ilustrada con medallón central, personajes PaperTopBCN y cajetín de pertenencia',
+        visualType: 'COVER_PAGE',
+      };
+
+  // 2. Collect existing exercise pages (pageNumber >= 1)
+  const exercisePages = rawPages
+    .filter((p) => p.pageNumber !== 0 && p.visualType !== 'COVER_PAGE')
+    .map((p, idx) => ({
+      ...p,
+      pageNumber: idx + 1,
+    }));
+
+  // 3. Template bank for completing up to 20 distinct exercise pages (Láminas 01..20)
+  const extraTemplates: Omit<GeneratedAssetPage, 'pageNumber'>[] = [
+    {
+      heading: 'Trazos Curvos y Preescritura Montessori (Nivel Progresivo)',
+      activityInstruction: 'Sigue los 5 senderos punteados de izquierda a derecha sin levantar el lápiz.',
+      childContent: '¡Acompaña a nuestros amigos por las 5 pistas curvas hasta llegar a la meta!',
+      illustrationTheme: '5 pistas de grafomotricidad curva con iconos vectoriales',
+      visualType: 'TRACING_PATHS',
+    },
+    {
+      heading: 'Recorta con Tijeras y Clasifica por Tamaño (Pequeño, Mediano, Grande)',
+      activityInstruction: 'Recorta por la línea de puntos las 6 tarjetas inferiores y pégalas en las 3 casillas superiores.',
+      childContent: 'Pequeño · Mediano · Grande — Observa el tamaño de cada figura y clasifícala.',
+      illustrationTheme: '3 casillas superiores y 6 fichas recortables con icono de tijeras',
+      visualType: 'SCISSORS_CUTOUT',
+    },
+    {
+      heading: 'Sumas Visuales con Apoyo Pictórico y Números Punteados',
+      activityInstruction: 'Cuenta los objetos de cada grupo, traza los sumandos punteados y escribe el total.',
+      childContent: 'Cuenta despacio con el dedo, suma los dos grupos y repasa el resultado final.',
+      illustrationTheme: 'Bloques de sumas visuales con números grandes punteados',
+      visualType: 'MATH_SUMS',
+    },
+    {
+      heading: 'Educación Emocional: Termómetro de Emociones y Dibujo Libre',
+      activityInstruction: 'Señala la emoción que sientes hoy y dibuja en el marco lateral tu actividad favorita.',
+      childContent: 'Alegre · Tranquilo · Curioso · Cansado — Reconozco y expreso mis emociones.',
+      illustrationTheme: '4 caritas emocionales y marco decorado de dibujo libre',
+      visualType: 'EMOTION_WHEEL',
+    },
+    {
+      heading: 'Laberinto de Atención Sostenida y Orientación Espacial',
+      activityInstruction: 'Resuelve el recorrido del laberinto primero con el dedo índice y luego con cera o lápiz.',
+      childContent: '¡Encuentra el camino abierto desde la entrada hasta el tesoro final!',
+      illustrationTheme: 'Laberinto vectorial de trazo grueso infantil',
+      visualType: 'MAZE_FOREST',
+    },
+    {
+      heading: 'Discriminación Visual: Une cada Figura con su Sombra',
+      activityInstruction: 'Observa los detalles del contorno y une con una línea cada dibujo con su silueta oscura.',
+      childContent: '¿De quién es cada sombra? Conecta cada pareja con tu lápiz.',
+      illustrationTheme: 'Columna de ilustraciones a la izquierda y siluetas de sombra a la derecha',
+      visualType: 'SHADOW_MATCH',
+    },
+    {
+      heading: 'Razonamiento Lógico: Completa las Series Montessori',
+      activityInstruction: 'Descubre el patrón que se repite en cada fila y dibuja la figura que falta en el recuadro azul.',
+      childContent: 'Observa el orden secreto de cada fila y adivina qué figura continúa la serie.',
+      illustrationTheme: '3 secuencias lógicas visuales con casilla de incógnita',
+      visualType: 'LOGIC_SERIES',
+    },
+    {
+      heading: 'Geometría y Percepción: Dibujo en Espejo (Simetría Axial)',
+      activityInstruction: 'Observa la mitad izquierda y completa la mitad derecha contando los cuadros de la rejilla.',
+      childContent: '¡Dibuja la mitad que falta como si se mirara en un espejo mágico!',
+      illustrationTheme: 'Cuadrícula con eje de simetría rojo y guía punteada',
+      visualType: 'SYMMETRY_DRAW',
+    },
+    {
+      heading: 'Atención y Motricidad Fina: Colorea por Números (1 al 5)',
+      activityInstruction: 'Pinta cada zona numerada siguiendo el código de 5 colores de la parte superior.',
+      childContent: '1 = Rojo · 2 = Amarillo · 3 = Verde · 4 = Azul · 5 = Marrón. ¡Colorea toda la escena!',
+      illustrationTheme: 'Ilustración de línea clara dividida en zonas numeradas del 1 al 5',
+      visualType: 'COLOR_BY_NUMBER',
+    },
+    {
+      heading: 'Numeración y Cantidad: Conteo del 1 al 10 con Contadores',
+      activityInstruction: 'Repasa la caligrafía punteada de los números del 1 al 10 y pinta sus círculos correspondientes.',
+      childContent: 'Del 1 al 10: traza cada número y colorea tantos puntos como indique.',
+      illustrationTheme: '10 tarjetas numeradas del 1 al 10 con números punteados y contadores',
+      visualType: 'COUNTING_1_10',
+    },
+    {
+      heading: 'Lectoescritura Inicial: Trazos de Vocales y Letras en Pauta',
+      activityInstruction: 'Repasa las letras gigantes punteadas siguiendo la dirección del trazo y practica en la pauta inferior.',
+      childContent: 'A · E · I · O · U — ¡Mis primeras letras grandes y claras en pauta Montessori!',
+      illustrationTheme: '5 letras gigantes punteadas y 3 renglones de pauta caligráfica escolar',
+      visualType: 'LETTER_TRACING_AEIOU',
+    },
+    {
+      heading: 'Autonomía y Tiempo: El Reloj de Mis Rutinas Diarias',
+      activityInstruction: 'Repasa las agujas punteadas de cada reloj para aprender las horas clave de mañana, tarde y noche.',
+      childContent: '08:00 Mañana · 14:00 Mediodía · 20:30 Noche — Comprendo el orden de mi día.',
+      illustrationTheme: '3 relojes analógicos didácticos con agujas punteadas y hábitos diarios',
+      visualType: 'CLOCK_ROUTINES',
+    },
+  ];
+
+  while (exercisePages.length < 20) {
+    const nextNum = exercisePages.length + 1;
+
+    if (nextNum === 20) {
+      exercisePages.push({
+        pageNumber: 20,
+        heading: `Lámina 20: Gran Diploma de Honor y Superación (${assetTitle.slice(0, 38)})`,
+        activityInstruction:
+          'Escribe el nombre del niño/a en el diploma, recórtalo y colócalo en un lugar especial para celebrar que ha completado las 20 láminas.',
+        childContent:
+          '¡Enhorabuena! Has completado las 20 láminas de ejercicios con entusiasmo, concentración y creatividad.',
+        illustrationTheme: 'Diploma oficial orlado con estrellas, personajes de PaperTopBCN y línea para el nombre',
+        visualType: 'DIPLOMA_FINAL',
+      });
+      break;
+    }
+
+    if (formatType === 'JPG_FLASHCARDS') {
+      const startCard = (nextNum - 1) * 4 + 1;
+      const vocabPairs = [
+        ['EL SOL', 'THE SUN', '/ðə sʌn/'],
+        ['LA LUNA', 'THE MOON', '/ðə muːn/'],
+        ['EL ÁRBOL', 'THE TREE', '/ðə triː/'],
+        ['LA FLOR', 'THE FLOWER', '/ðə ˈflaʊ.ər/'],
+        ['EL AGUA', 'THE WATER', '/ðə ˈwɔː.tər/'],
+        ['EL LIBRO', 'THE BOOK', '/ðə bʊk/'],
+        ['EL LÁPIZ', 'THE PENCIL', '/ðə ˈpen.səl/'],
+        ['LA CASA', 'THE HOUSE', '/ðə haʊs/'],
+      ];
+      exercisePages.push({
+        pageNumber: nextNum,
+        heading: `Lámina ${nextNum} (Tarjetas #${String(startCard).padStart(2, '0')} a #${String(startCard + 3).padStart(2, '0')}): Vocabulario y Frases Bilingües ES/EN`,
+        activityInstruction:
+          'Recorta por la línea de puntos estas 4 tarjetas bilingües adicionales y combínalas con las anteriores para formar frases.',
+        childContent: `Tarjetas recortables #${startCard} a #${startCard + 3} en español e inglés con pronunciación figurada.`,
+        illustrationTheme: 'Cuadrícula de 4 tarjetas flashcards bilingües recortables a 300 DPI',
+        visualType: 'FLASHCARDS_GRID',
+        flashcardsData: [0, 1, 2, 3].map((offset) => {
+          const pair = vocabPairs[(startCard + offset) % vocabPairs.length];
+          const icons = ['star', 'leaf', 'acorn', 'mushroom', 'squirrel', 'dino'];
+          const colors = ['#FEF3C7', '#E0F2FE', '#DCFCE7', '#FCE7F3'];
+          return {
+            cardNumber: startCard + offset,
+            es: pair[0],
+            en: pair[1],
+            phonetic: pair[2],
+            category: 'Bilingüe · ES/EN',
+            colorHex: colors[offset % colors.length],
+            iconType: icons[(startCard + offset) % icons.length],
+          };
+        }),
+      });
+      continue;
+    }
+
+    const tpl = extraTemplates[(nextNum - 1) % extraTemplates.length];
+    exercisePages.push({
+      pageNumber: nextNum,
+      heading: `Lámina ${nextNum}: ${tpl.heading}`,
+      activityInstruction: tpl.activityInstruction,
+      childContent: tpl.childContent,
+      illustrationTheme: tpl.illustrationTheme,
+      visualType: tpl.visualType,
+    });
+  }
+
+  return [coverPage, ...exercisePages];
 }

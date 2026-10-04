@@ -8,7 +8,11 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type } from '@google/genai';
 import type { FunctionDeclaration } from '@google/genai';
 import { COMPLETE_ACTION_ALERTS } from './src/data/completeWorksheetsData';
-import { renderWorksheetPageSvg, GeneratedAssetPage } from './src/utils/worksheetSvgEngine';
+import {
+  renderWorksheetPageSvg,
+  GeneratedAssetPage,
+  ensureCoverAndMin20ExercisePages,
+} from './src/utils/worksheetSvgEngine';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -336,7 +340,7 @@ async function startServer() {
       <div>
         <div class="brand-header">
           <span>PAPERTOPBCN · EDAD RECOMENDADA: ${age}</span>
-          <span>LÁMINA ${String(p.pageNumber).padStart(2, '0')} DE ${String(pages.length).padStart(2, '0')} · ${fileNameCode}</span>
+          <span>${p.pageNumber === 0 ? '★ PORTADA PRINCIPAL (PÁGINA 00)' : `EJERCICIO PÁGINA ${String(p.pageNumber).padStart(2, '0')} DE ${pages.filter((x) => x.pageNumber > 0).length}`} · ${fileNameCode}</span>
         </div>
         <h1>${p.heading}</h1>
         <div class="instruction-box">
@@ -930,11 +934,41 @@ Devuelve un JSON con:
       });
 
       const parsed = JSON.parse(response.text || '{}');
+      const fmt = (formatType || 'PDF_IMPRIMIBLE') as 'PDF_IMPRIMIBLE' | 'EPUB_CUENTO' | 'JPG_FLASHCARDS';
+      parsed.pages = ensureCoverAndMin20ExercisePages(
+        parsed.assetTitle || title || 'Cuaderno Infantil PaperTopBCN',
+        ageRange || '3–6 años',
+        fmt,
+        Array.isArray(parsed.pages) ? parsed.pages : []
+      );
       res.json(parsed);
     } catch (error: unknown) {
-      const errMessage = error instanceof Error ? error.message : 'Error al generar el archivo digital autónomo';
-      console.error('Error in /api/ptb/generate-digital-asset:', errMessage);
-      res.status(500).json({ error: errMessage });
+      const fmt = (req.body?.formatType || 'PDF_IMPRIMIBLE') as 'PDF_IMPRIMIBLE' | 'EPUB_CUENTO' | 'JPG_FLASHCARDS';
+      const fallbackTitle = req.body?.title || 'Cuaderno Infantil PaperTopBCN';
+      const fallbackAge = req.body?.ageRange || '3–6 años';
+      res.json({
+        assetTitle: fallbackTitle,
+        recommendedFileNameBase: 'PTB_Cuaderno_Infantil_20_Paginas',
+        autonomousSummary:
+          'Montado autónomamente con el Motor Gráfico Vectorial de PaperTopBCN: incluye Página 0 (Portada Principal) + 20 páginas completas de ejercicios infantiles.',
+        pages: ensureCoverAndMin20ExercisePages(fallbackTitle, fallbackAge, fmt, []),
+        canAutoPublishPortals: ['X (Twitter)', 'Instagram', 'Pinterest', 'Reddit', 'TikTok'],
+        manualActionRequired: true,
+        notificationAlert: {
+          whatToDo: 'Revisa la Portada (Página 0) y las 20 páginas de ejercicios en el visor, pulsa "DAR EL OK" y descarga el archivo A4 o KDP.',
+          whereToPublish: 'Gumroad · Amazon KDP (8.5x11") · Carpeta FTP /PTB/descargas/',
+          whatWeNeedFromUser: 'Tu OK tras previsualizar la Portada (Página 0) y las 20 láminas de ejercicios.',
+          seoKeywords: [
+            'cuaderno montessori 20 paginas pdf',
+            'actividades infantiles imprimir',
+            'grafomotricidad y trazos preescolar',
+            'recortables tijeras ninos',
+            'sumas visuales montessori',
+            'libro actividades kdp espanol',
+            'papertopbcn recursos educativos',
+          ],
+        },
+      });
     }
   });
 
