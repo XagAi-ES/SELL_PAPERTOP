@@ -38,6 +38,10 @@ import {
   AutonomousContentFactoryView,
   ActionAlertItem,
 } from './components/AutonomousContentFactoryView';
+import {
+  GmailConfigManagerModal,
+  GoogleSignInButton,
+} from './components/GmailConfigManagerModal';
 import { getApiUrl } from './utils/api';
 import {
   Search,
@@ -84,7 +88,7 @@ const INITIAL_ACTION_ALERTS: ActionAlertItem[] = [
     ageRange: '3–6 años',
     suggestedPriceEur: 11.9,
     createdAt: 'Hoy · 09:40',
-    approvalStatus: 'PENDIENTE_OK',
+    approvalStatus: 'APROBADO_OK',
     autonomousSummary:
       'El Agente IA de PaperTopBCN ha redactado los ejercicios pedagógicos y el Motor de Maquetación ha montado las 4 láminas A4 y 8.5x11" con guías de trazo punteado, recorte con tijeras y actividades emocionales.',
     canAutoPublishPortals: ['X (Twitter)', 'Instagram', 'Pinterest', 'Reddit', 'TikTok'],
@@ -152,7 +156,7 @@ const INITIAL_ACTION_ALERTS: ActionAlertItem[] = [
     ageRange: '2–5 años',
     suggestedPriceEur: 8.9,
     createdAt: 'Hoy · 09:15',
-    approvalStatus: 'PENDIENTE_OK',
+    approvalStatus: 'APROBADO_OK',
     autonomousSummary:
       'Se han maquetado las tarjetas visuales bilingües a 300 DPI con bordes redondeados de recorte, fonética simplificada para padres y tipografía escolar.',
     canAutoPublishPortals: ['Instagram', 'Pinterest', 'TikTok', 'X (Twitter)'],
@@ -310,7 +314,7 @@ export default function App() {
   });
 
   const [actionAlerts, setActionAlerts] = useState<ActionAlertItem[]>(() => {
-    const saved = localStorage.getItem('ptb_action_alerts_v2');
+    const saved = localStorage.getItem('ptb_action_alerts_v3');
     return saved ? JSON.parse(saved) : INITIAL_ACTION_ALERTS;
   });
 
@@ -323,6 +327,17 @@ export default function App() {
   // Modals
   const [showNewCapabilityModal, setShowNewCapabilityModal] = useState<boolean>(false);
   const [showNewTaskModal, setShowNewTaskModal] = useState<boolean>(false);
+  const [showPortalSetupWizard, setShowPortalSetupWizard] = useState<boolean>(false);
+  const [wizardDomain, setWizardDomain] = useState<string>('https://papertopbcn.com/PTB');
+  const [wizardGumroadUrl, setWizardGumroadUrl] = useState<string>('https://papertopbcn.gumroad.com');
+  const [wizardInstagram, setWizardInstagram] = useState<string>('@papertopbcn');
+  const [wizardX, setWizardX] = useState<string>('@PaperTopBCN');
+  const [wizardPinterest, setWizardPinterest] = useState<string>('pinterest.com/papertopbcn');
+  const [wizardReddit, setWizardReddit] = useState<string>('u/PaperTopBCN');
+  const [wizardTiktok, setWizardTiktok] = useState<string>('@papertopbcn.kids');
+  const [wizardKdpAuthor, setWizardKdpAuthor] = useState<string>('PaperTopBCN Publishing');
+  const [wizardLanguage, setWizardLanguage] = useState<string>('Español + Catalán + Inglés (Bilingüe)');
+  const [wizardWebhookUrl, setWizardWebhookUrl] = useState<string>('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDesc, setNewTaskDesc] = useState('');
   const [newTaskCategory, setNewTaskCategory] =
@@ -369,7 +384,7 @@ export default function App() {
     localStorage.setItem('ptb_domain_v2', JSON.stringify(domainConfig));
   }, [domainConfig]);
   useEffect(() => {
-    localStorage.setItem('ptb_action_alerts_v2', JSON.stringify(actionAlerts));
+    localStorage.setItem('ptb_action_alerts_v3', JSON.stringify(actionAlerts));
   }, [actionAlerts]);
 
   useEffect(() => {
@@ -1002,6 +1017,56 @@ export default function App() {
             MAIN CONTENT VIEWPORT
         =================================================================== */}
         <main className="flex-1 overflow-y-auto">
+          {/* =================================================================
+              INSTANT ZIP DOWNLOAD BAR (FOLLOWING USER'S "OK PARA ENVIAR X ZIP YA")
+          ================================================================= */}
+          <div className="bg-gradient-to-r from-emerald-950/90 via-[#0E182B] to-cyan-950/90 border-b border-emerald-500/40 px-6 py-3.5 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-400 text-emerald-400 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-4 h-4" />
+              </span>
+              <div>
+                <div className="font-mono-code text-xs text-emerald-400 font-bold uppercase">
+                  ✅ ¡OK CONFIRMADO! PAQUETES .ZIP COMPILADOS Y LISTOS PARA DESCARGAR AHORA
+                </div>
+                <p className="text-xs text-slate-300">
+                  Los 3 productos infantiles (<code className="text-white">PTB_01</code>, <code className="text-white">PTB_02</code>, <code className="text-white">PTB_03</code>) ya tienen tu OK y están incluidos con sus nombres oficiales dentro del ZIP.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <GoogleSignInButton
+                onClick={() => setShowPortalSetupWizard(true)}
+                label="Sign in with Google · Gmail"
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPortalSetupWizard(true)}
+                className="cortx-btn-amber px-4 py-2 flex items-center gap-2 font-bold whitespace-nowrap"
+              >
+                📧 CONFIGURAR PORTALES VÍA GMAIL / WEB
+              </button>
+
+              <a
+                href="/api/ptb/download-ftp-zip"
+                download="PaperTopBCN_FTP_PTB.zip"
+                className="cortx-btn-emerald px-4 py-2 flex items-center gap-2 font-bold shadow-lg whitespace-nowrap"
+              >
+                📦 DESCARGAR PORTAL + CONTENIDOS FTP (/PTB) (.ZIP)
+              </a>
+
+              <a
+                href="/api/ptb/download-approved-content-zip"
+                download="PaperTopBCN_Contenidos_Aprobados_OK.zip"
+                className="cortx-btn-primary px-4 py-2 flex items-center gap-2 font-bold whitespace-nowrap"
+              >
+                📥 DESCARGAR SOLO CONTENIDOS APROBADOS (.ZIP)
+              </a>
+            </div>
+          </div>
+
           {/* 1. CORTX AGENT & ACTIVITY FLOW INSPECTOR (Exact match to new image.png) */}
           {activeSection === 'AGENT_FLOW' && (
             <div className="flex flex-col min-h-full">
@@ -1975,6 +2040,63 @@ export default function App() {
           </form>
         </div>
       )}
+
+      {/* =====================================================================
+          MODAL: GMAIL & WEB PORTAL CONFIGURATION MANAGER
+      ===================================================================== */}
+      <GmailConfigManagerModal
+        isOpen={showPortalSetupWizard}
+        onClose={() => setShowPortalSetupWizard(false)}
+        wizardDomain={wizardDomain}
+        setWizardDomain={setWizardDomain}
+        wizardGumroadUrl={wizardGumroadUrl}
+        setWizardGumroadUrl={setWizardGumroadUrl}
+        wizardInstagram={wizardInstagram}
+        setWizardInstagram={setWizardInstagram}
+        wizardX={wizardX}
+        setWizardX={setWizardX}
+        wizardPinterest={wizardPinterest}
+        setWizardPinterest={setWizardPinterest}
+        wizardReddit={wizardReddit}
+        setWizardReddit={setWizardReddit}
+        wizardTiktok={wizardTiktok}
+        setWizardTiktok={setWizardTiktok}
+        wizardKdpAuthor={wizardKdpAuthor}
+        setWizardKdpAuthor={setWizardKdpAuthor}
+        wizardLanguage={wizardLanguage}
+        setWizardLanguage={setWizardLanguage}
+        wizardWebhookUrl={wizardWebhookUrl}
+        setWizardWebhookUrl={setWizardWebhookUrl}
+        approvedAlerts={actionAlerts}
+        onSaveWebConfig={() => {
+          setDomainConfig((prev) => ({
+            ...prev,
+            customDomain: wizardDomain.trim() || prev.customDomain,
+          }));
+          setPortals((prev) =>
+            prev.map((p) => {
+              if (p.id === 'gumroad') return { ...p, handle: wizardGumroadUrl.trim(), connected: true };
+              if (p.id === 'instagram') return { ...p, handle: wizardInstagram.trim(), connected: true };
+              if (p.id === 'x') return { ...p, handle: wizardX.trim(), connected: true };
+              if (p.id === 'pinterest') return { ...p, handle: wizardPinterest.trim(), connected: true };
+              if (p.id === 'reddit') return { ...p, handle: wizardReddit.trim(), connected: true };
+              if (p.id === 'tiktok') return { ...p, handle: wizardTiktok.trim(), connected: true };
+              if (p.id === 'amazon_kdp') return { ...p, handle: wizardKdpAuthor.trim(), connected: true };
+              return p;
+            })
+          );
+          setChatFeed((prev) => [
+            ...prev,
+            {
+              id: `wiz-${Date.now()}`,
+              type: 'AI_THOUGHT_RESPONSE',
+              thinkingSeconds: 2,
+              text: `✅ Datos reales de portales actualizados: Dominio (${wizardDomain}), Gumroad (${wizardGumroadUrl}), Instagram (${wizardInstagram}), X (${wizardX}), Pinterest (${wizardPinterest}), Reddit (${wizardReddit}), KDP (${wizardKdpAuthor}), Idioma (${wizardLanguage}).`,
+              timestamp: currentTimeStr(),
+            },
+          ]);
+        }}
+      />
     </div>
   );
 }
